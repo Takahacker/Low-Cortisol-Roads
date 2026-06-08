@@ -26,7 +26,7 @@ RenderSettings:
   m_AmbientIntensity: 1
   m_AmbientMode: 1
   m_SubtractiveShadowColor: {r: 0.42, g: 0.478, b: 0.627, a: 1}
-  m_SkyboxMaterial: {fileID: 87109987}
+  m_SkyboxMaterial: {fileID: 2052803295}
   m_HaloStrength: 0.5
   m_FlareStrength: 1
   m_FlareFadeSpeed: 3
@@ -119,44 +119,6 @@ NavMeshSettings:
     debug:
       m_Flags: 0
   m_NavMeshData: {fileID: 0}
---- !u!21 &87109987
-Material:
-  serializedVersion: 8
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_Name: Custom/GradientSkybox
-  m_Shader: {fileID: 4800000, guid: a0ab733860353489f948aaf55383334b, type: 3}
-  m_Parent: {fileID: 0}
-  m_ModifiedSerializedProperties: 0
-  m_ValidKeywords: []
-  m_InvalidKeywords: []
-  m_LightmapFlags: 4
-  m_EnableInstancingVariants: 0
-  m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
-  stringTagMap: {}
-  disabledShaderPasses: []
-  m_LockedProperties: 
-  m_SavedProperties:
-    serializedVersion: 3
-    m_TexEnvs: []
-    m_Ints: []
-    m_Floats:
-    - _Blend: 0.163
-    - _MidEnd: 0.61
-    - _MidStart: 0.253
-    - _SunSize: 0.06
-    - _SunX: 0.3
-    - _SunY: 0.25
-    m_Colors:
-    - _BotColor: {r: 0.4509804, g: 0.55, b: 0.78039217, a: 1}
-    - _MidColor: {r: 0.8784314, g: 0.6784314, b: 0.5803922, a: 1}
-    - _SunColor: {r: 1, g: 0.6354994, b: 0.02352941, a: 1}
-    - _TopColor: {r: 0.4269313, g: 0.51679826, b: 0.735849, a: 1}
-  m_BuildTextureStacks: []
-  m_AllowLocking: 1
 --- !u!1 &593107035
 GameObject:
   m_ObjectHideFlags: 0
@@ -327,10 +289,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 66aad1ecbccf042419c38e46cc08e148, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BallController
-  forwardForce: 30
-  turnForce: 40
-  maxSpeed: 50
-  gravity: 120
+  forwardForce: 15
+  turnForce: 30
+  maxSpeed: 15
 --- !u!54 &683944066
 Rigidbody:
   m_ObjectHideFlags: 0
@@ -617,7 +578,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 03d121c190ada4fdca7c6f8224f0ca7a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::CameraFollow
-  offset: {x: 0, y: 1, z: -4}
+  offset: {x: 0, y: 1, z: -3}
   smoothSpeed: 8
   lookAhead: 8
 --- !u!1 &884312784
@@ -988,10 +949,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0461dcdb73a644f5ca0a8c5f2de50125, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::EnvironmentManager
-  mountainFarColor: {r: 0.9245283, g: 0.6108491, b: 0.51023495, a: 0.8235294}
-  mountainMidColor: {r: 0.8962264, g: 0.6379554, b: 0.56225526, a: 1}
-  mountainNearColor: {r: 0.8396226, g: 0.63651335, b: 0.5742702, a: 1}
-  cloudColor: {r: 0.8962264, g: 0.75272685, b: 0.6975347, a: 1}
+  mountainFarColor: {r: 0.9528302, g: 0.72556204, b: 0.6516999, a: 0.5372549}
+  mountainMidColor: {r: 0.9254902, g: 0.6117647, b: 0.50980395, a: 0.23529412}
+  mountainNearColor: {r: 0.8018868, g: 0.53678393, b: 0.4501157, a: 0.40392157}
+  cloudColor: {r: 0.8962264, g: 0.75272685, b: 0.6975347, a: 0.03529412}
+  mountainRefMaterial: {fileID: 0}
+  cloudRefMaterial: {fileID: 0}
 --- !u!1 &1529009086
 GameObject:
   m_ObjectHideFlags: 0
@@ -1041,11 +1004,11 @@ MonoBehaviour:
   pointsPerChunk: 30
   turnSpeed: 0.4
   descentAngle: 8
-  gateSpacing: 70
-  trackMaterial: {fileID: 0}
-  edgeMaterial: {fileID: 0}
-  gateMaterial: {fileID: 0}
-  archMaterial: {fileID: 0}
+  gateSpacing: 80
+  trackMaterial: {fileID: 2100000, guid: 9f876811357574db5ac159e188763b05, type: 2}
+  edgeMaterial: {fileID: 2100000, guid: c586268d40606491cb5b3ca2bd114e19, type: 2}
+  gateMaterial: {fileID: 2100000, guid: 5a8f621a425f74c61896905cba1f292d, type: 2}
+  archMaterial: {fileID: 2100000, guid: fe34eb7c859034fc09abedc56eb21338, type: 2}
 --- !u!1 &1635189105
 GameObject:
   m_ObjectHideFlags: 0
@@ -1382,6 +1345,44 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!21 &2052803295
+Material:
+  serializedVersion: 8
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_Name: Custom/GradientSkybox
+  m_Shader: {fileID: 4800000, guid: a0ab733860353489f948aaf55383334b, type: 3}
+  m_Parent: {fileID: 0}
+  m_ModifiedSerializedProperties: 0
+  m_ValidKeywords: []
+  m_InvalidKeywords: []
+  m_LightmapFlags: 4
+  m_EnableInstancingVariants: 0
+  m_DoubleSidedGI: 0
+  m_CustomRenderQueue: -1
+  stringTagMap: {}
+  disabledShaderPasses: []
+  m_LockedProperties: 
+  m_SavedProperties:
+    serializedVersion: 3
+    m_TexEnvs: []
+    m_Ints: []
+    m_Floats:
+    - _Blend: 0.163
+    - _MidEnd: 0.61
+    - _MidStart: 0.253
+    - _SunSize: 0.06
+    - _SunX: 0.3
+    - _SunY: 0.25
+    m_Colors:
+    - _BotColor: {r: 0.4509804, g: 0.55, b: 0.78039217, a: 1}
+    - _MidColor: {r: 0.8784314, g: 0.6784314, b: 0.5803922, a: 1}
+    - _SunColor: {r: 1, g: 0.6354994, b: 0.02352941, a: 1}
+    - _TopColor: {r: 0.4269313, g: 0.51679826, b: 0.735849, a: 1}
+  m_BuildTextureStacks: []
+  m_AllowLocking: 1
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0

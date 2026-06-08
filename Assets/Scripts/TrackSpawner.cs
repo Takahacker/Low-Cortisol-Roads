@@ -13,7 +13,7 @@ public class TrackSpawner : MonoBehaviour
     public float descentAngle = 8f;
 
     [Header("Gates")]
-    public float gateSpacing = 1000f;
+    public float gateSpacing = 80f;
 
     public Material trackMaterial;
     public Material edgeMaterial;
@@ -36,6 +36,7 @@ public class TrackSpawner : MonoBehaviour
     private int gateNumber = 1;
 
     private List<GameObject> chunks = new List<GameObject>();
+    private List<GameObject> arches = new List<GameObject>();
     private int chunksAhead = 5;
     private int chunksBehind = 2;
     private int totalChunks = 0;
@@ -58,11 +59,26 @@ public class TrackSpawner : MonoBehaviour
         if (!gateMaterial) gateMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/GateMaterial.mat");
         if (!archMaterial) archMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>("Assets/Materials/ArchMaterial.mat");
 #endif
-        Shader sh = Shader.Find("Universal Render Pipeline/Lit") ?? Shader.Find("Standard");
-        if (!trackMaterial) { trackMaterial = new Material(sh); trackMaterial.color = new Color(0.08f, 0.08f, 0.12f); }
-        if (!edgeMaterial) { edgeMaterial = new Material(sh); edgeMaterial.color = new Color(0.3f, 0.8f, 1f); }
-        if (!gateMaterial) { gateMaterial = new Material(sh); gateMaterial.color = new Color(0.3f, 0.8f, 1f); }
-        if (!archMaterial) { archMaterial = new Material(sh); archMaterial.color = new Color(0.92f, 0.92f, 0.95f); }
+        // In builds, create materials by copying shader from existing scene renderers
+        if (!trackMaterial || !edgeMaterial || !gateMaterial || !archMaterial)
+        {
+            Material baseMat = FindBaseMaterial();
+            if (!trackMaterial) { trackMaterial = new Material(baseMat); trackMaterial.color = new Color(0.06f, 0.08f, 0.18f); }
+            if (!edgeMaterial) { edgeMaterial = new Material(baseMat); edgeMaterial.color = new Color(0.3f, 0.8f, 1f); }
+            if (!gateMaterial) { gateMaterial = new Material(baseMat); gateMaterial.color = new Color(0.3f, 0.8f, 1f); }
+            if (!archMaterial) { archMaterial = new Material(baseMat); archMaterial.color = new Color(0.92f, 0.92f, 0.95f); }
+        }
+    }
+
+    Material FindBaseMaterial()
+    {
+        Renderer[] renderers = FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        foreach (var r in renderers)
+        {
+            if (r.sharedMaterial != null && r.sharedMaterial.shader != null)
+                return r.sharedMaterial;
+        }
+        return new Material(Shader.Find("Standard"));
     }
 
     void Update()
@@ -77,6 +93,16 @@ public class TrackSpawner : MonoBehaviour
         {
             if (chunks[0] != null) Destroy(chunks[0]);
             chunks.RemoveAt(0);
+        }
+
+        // Clean old arches
+        for (int i = arches.Count - 1; i >= 0; i--)
+        {
+            if (arches[i] == null || ball.position.z - arches[i].transform.position.z > stepSize * pointsPerChunk * 3)
+            {
+                if (arches[i] != null) Destroy(arches[i]);
+                arches.RemoveAt(i);
+            }
         }
     }
 
@@ -130,7 +156,7 @@ public class TrackSpawner : MonoBehaviour
             distSinceGate += Vector3.Distance(pts[i], pts[i - 1]);
             if (distSinceGate >= gateSpacing && !straight && totalChunks > 0)
             {
-                SpawnArch(chunk.transform, pts[i], fs[i], rs[i], us[i]);
+                SpawnArch(pts[i], fs[i], rs[i], us[i]);
                 distSinceGate = 0f;
             }
         }
@@ -189,9 +215,9 @@ public class TrackSpawner : MonoBehaviour
         obj.AddComponent<MeshCollider>().sharedMesh = m;
     }
 
-    void SpawnArch(Transform parent, Vector3 pos, Vector3 fwd, Vector3 right, Vector3 up)
+    void SpawnArch(Vector3 pos, Vector3 fwd, Vector3 right, Vector3 up)
     {
-        float hw = trackWidth / 2f + 0.8f;
+        float hw = trackWidth / 2f + 2.5f;
         float archHeight = 4.5f;
         float legHeight = 50f;
         float archWidth = 0.7f;
@@ -200,11 +226,10 @@ public class TrackSpawner : MonoBehaviour
         int legSegments = 8;
 
         GameObject arch = new GameObject("Arch_" + gateNumber);
-        arch.transform.position = pos;
+        arch.transform.position = pos + Vector3.up * 0.5f;
         // Flatten forward to horizontal so arch stands straight up
         Vector3 flatFwd = new Vector3(fwd.x, 0, fwd.z).normalized;
         arch.transform.rotation = Quaternion.LookRotation(flatFwd, Vector3.up);
-        arch.transform.parent = parent;
 
         Mesh archMesh = BuildArchMesh(hw, archHeight, legHeight, archWidth, archDepth, archSegments, legSegments);
 
@@ -216,16 +241,23 @@ public class TrackSpawner : MonoBehaviour
         var mr = archObj.AddComponent<MeshRenderer>();
         mr.material = archMaterial;
         mr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+        // Render behind track to avoid visual overlap
+        if (mr.material != null)
+            mr.material.renderQueue = 2000;
 
-        // Gate number floating above arch
-        GameObject numObj = new GameObject("Num");
-        numObj.transform.parent = arch.transform;
-        numObj.transform.localPosition = new Vector3(0, archHeight + 0.8f, 0);
-        var tmp = numObj.AddComponent<TMPro.TextMeshPro>();
-        tmp.text = gateNumber.ToString();
-        tmp.fontSize = 6;
-        tmp.alignment = TMPro.TextAlignmentOptions.Center;
-        tmp.color = new Color(0.3f, 0.8f, 1f);
+        // Gate number floating above arch (wrapped to prevent build errors)
+        try
+        {
+            GameObject numObj = new GameObject("Num");
+            numObj.transform.parent = arch.transform;
+            numObj.transform.localPosition = new Vector3(0, archHeight + 0.8f, 0);
+            var tmp = numObj.AddComponent<TMPro.TextMeshPro>();
+            tmp.text = gateNumber.ToString();
+            tmp.fontSize = 6;
+            tmp.alignment = TMPro.TextAlignmentOptions.Center;
+            tmp.color = new Color(0.3f, 0.8f, 1f);
+        }
+        catch { }
 
         // Trigger
         BoxCollider trigger = arch.AddComponent<BoxCollider>();
@@ -236,6 +268,7 @@ public class TrackSpawner : MonoBehaviour
         Gate gs = arch.AddComponent<Gate>();
         gs.gateNumber = gateNumber;
         gs.gameManager = gameManager;
+        arches.Add(arch);
         gateNumber++;
     }
 

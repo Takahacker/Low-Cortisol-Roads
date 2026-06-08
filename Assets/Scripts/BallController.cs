@@ -4,65 +4,38 @@ public class BallController : MonoBehaviour
 {
     [Header("Movement")]
     public float forwardForce = 30f;
-    public float turnForce = 40f;
+    public float turnForce = 15f;
     public float maxSpeed = 25f;
-    public float gravity = 120f; // Gravidade customizável
 
     private Rigidbody rb;
     private GameManager gameManager;
-    private Collider ballCollider;
     private bool isAlive = true;
-    private float fallThreshold = -5f;
-    private bool initialized = false;
-    private int frameCount = 0;
-    private float ballRadius = 0f;
+    private float fallThreshold = -20f;
+    private bool started = false;
+    private float startDelay = 0.3f;
 
     void Start()
     {
         rb = GetComponent<Rigidbody>();
         gameManager = FindFirstObjectByType<GameManager>();
-        ballCollider = GetComponent<Collider>();
-        frameCount = 0;
-        
-        // Desabilitar gravidade padrão para usar gravidade customizável
-        rb.useGravity = false;
-        
-        // Cache o raio da bola
-        ballRadius = ballCollider.bounds.extents.y;
+        // Freeze ball until track is ready
+        rb.isKinematic = true;
+        // Move ball up to avoid falling through
+        transform.position = new Vector3(transform.position.x, 3f, transform.position.z);
+        Invoke("StartBall", startDelay);
     }
 
-    void Update()
+    void StartBall()
     {
-        // Espera alguns frames para garantir que a pista foi totalmente construída
-        frameCount++;
-        if (!initialized && frameCount > 5)
-        {
-            // Posiciona bem alto e usa raycast para encontrar a pista
-            Vector3 startPos = new Vector3(0, 50f, 0);
-            transform.position = startPos;
-            rb.linearVelocity = Vector3.zero;
-            rb.angularVelocity = Vector3.zero;
-            
-            // Raycast para encontrar a superfície da pista
-            RaycastHit hit;
-            if (Physics.Raycast(startPos, Vector3.down, out hit, 100f))
-            {
-                // Posiciona a bola na superfície da pista + raio da bola
-                transform.position = new Vector3(hit.point.x, hit.point.y + ballRadius, hit.point.z);
-            }
-            
-            initialized = true;
-        }
+        rb.isKinematic = false;
+        started = true;
     }
 
     void FixedUpdate()
     {
-        if (!isAlive) return;
+        if (!isAlive || !started) return;
 
-        // Aplicar gravidade customizada
-        rb.AddForce(Vector3.down * gravity, ForceMode.Acceleration);
-
-        // Forward force - seguir a direção da pista
+        // Forward force
         rb.AddForce(Vector3.forward * forwardForce, ForceMode.Acceleration);
 
         // Lateral steering
@@ -76,12 +49,11 @@ public class BallController : MonoBehaviour
 
         // Cap speed
         Vector3 vel = rb.linearVelocity;
-        float horizontalMagSq = vel.x * vel.x + vel.z * vel.z;
-        float maxSpeedSq = maxSpeed * maxSpeed;
-        if (horizontalMagSq > maxSpeedSq)
+        Vector3 horizontalVel = new Vector3(vel.x, 0, vel.z);
+        if (horizontalVel.magnitude > maxSpeed)
         {
-            float scale = maxSpeed / Mathf.Sqrt(horizontalMagSq);
-            rb.linearVelocity = new Vector3(vel.x * scale, vel.y, vel.z * scale);
+            horizontalVel = horizontalVel.normalized * maxSpeed;
+            rb.linearVelocity = new Vector3(horizontalVel.x, vel.y, horizontalVel.z);
         }
 
         // Fall detection

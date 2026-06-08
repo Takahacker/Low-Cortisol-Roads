@@ -11,6 +11,10 @@ public class EnvironmentManager : MonoBehaviour
     [Header("Cloud Color")]
     public Color cloudColor = new Color(0.92f, 0.87f, 0.85f);
 
+    [Header("Reference Materials")]
+    public Material mountainRefMaterial;
+    public Material cloudRefMaterial;
+
     private Transform ball;
     private List<GameObject> envObjects = new List<GameObject>();
     private float lastSpawnZ = 0f;
@@ -27,6 +31,17 @@ public class EnvironmentManager : MonoBehaviour
     {
         ball = GameObject.FindWithTag("Player")?.transform;
 
+        // Create ref materials if not assigned
+        if (mountainRefMaterial == null)
+        {
+            mountainRefMaterial = CreateMaterial(mountainNearColor);
+        }
+        if (cloudRefMaterial == null)
+        {
+            cloudRefMaterial = CreateMaterial(Color.white);
+            SetTransparent(cloudRefMaterial);
+        }
+
         layers = new MountainLayer[]
         {
             new MountainLayer { minDist = 250f, maxDist = 400f, minH = 50f, maxH = 100f, baseSize = 80f,
@@ -39,6 +54,28 @@ public class EnvironmentManager : MonoBehaviour
 
         for (float z = -200f; z < 500f; z += spawnInterval)
             SpawnBatch(z);
+    }
+
+    Material CreateMaterial(Color col)
+    {
+        // Use the same shader as an existing material in the project
+        Material baseMat = GetBaseMaterial();
+        Material mat = new Material(baseMat);
+        mat.color = col;
+        return mat;
+    }
+
+    Material GetBaseMaterial()
+    {
+        // Try to find any existing material to copy its shader
+        Renderer[] renderers = FindObjectsByType<Renderer>(FindObjectsSortMode.None);
+        foreach (var r in renderers)
+        {
+            if (r.sharedMaterial != null && r.sharedMaterial.shader != null)
+                return r.sharedMaterial;
+        }
+        // Last resort
+        return new Material(Shader.Find("Standard"));
     }
 
     void Update()
@@ -78,7 +115,6 @@ public class EnvironmentManager : MonoBehaviour
             }
         }
 
-        // Cloud sea
         for (int i = 0; i < 8; i++)
         {
             float x = ball.position.x + Random.Range(-200f, 200f);
@@ -119,8 +155,7 @@ public class EnvironmentManager : MonoBehaviour
         mt.AddComponent<MeshFilter>().sharedMesh = mesh;
         var mr = mt.AddComponent<MeshRenderer>();
 
-        Shader sh = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color");
-        Material mat = new Material(sh);
+        Material mat = new Material(mountainRefMaterial);
         float v = Random.Range(-0.02f, 0.02f);
         mat.color = new Color(col.r + v, col.g + v, col.b + v);
         mr.material = mat;
@@ -134,9 +169,6 @@ public class EnvironmentManager : MonoBehaviour
         GameObject cloud = new GameObject("Cl");
         cloud.transform.position = pos;
 
-        Shader sh = Shader.Find("Universal Render Pipeline/Unlit") ?? Shader.Find("Unlit/Color");
-
-        // Single very large, very flat ellipsoid - like a fog bank
         int layers = Random.Range(2, 4);
         for (int i = 0; i < layers; i++)
         {
@@ -144,7 +176,7 @@ public class EnvironmentManager : MonoBehaviour
             Destroy(p.GetComponent<Collider>());
             p.transform.parent = cloud.transform;
 
-            Material mat = new Material(sh);
+            Material mat = new Material(cloudRefMaterial);
             float brightness = Random.Range(0.9f, 1.05f);
             float alpha = Random.Range(0.3f, 0.5f);
             mat.color = new Color(
@@ -154,7 +186,6 @@ public class EnvironmentManager : MonoBehaviour
                 alpha);
             SetTransparent(mat);
 
-            // Extremely flat and wide
             float sx = Random.Range(40f, 90f);
             float sy = Random.Range(0.8f, 2f);
             float sz = Random.Range(30f, 60f);
